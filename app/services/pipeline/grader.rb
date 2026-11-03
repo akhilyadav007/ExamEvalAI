@@ -88,7 +88,7 @@ module Pipeline
           criteria_json: Array(r.json["criteria"]).to_json,
           grader_flags_json: Array(r.json["flags"]).to_json
         )
-        [r, "Q#{q.number}: #{marks}/#{q.max_marks.to_f} (confidence #{r.json['confidence'].to_f.round(2)})"]
+        [r, "Q#{q.number}: #{self.class.fmt(marks)}/#{self.class.fmt(q.max_marks)} (confidence #{r.json['confidence'].to_f.round(2)})"]
       end
     end
   end

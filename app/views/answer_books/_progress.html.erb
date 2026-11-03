@@ -1,0 +1,10 @@
+<%# Pipeline progress pills: done / current / pending %>
+<% steps = [["rasterizing", "Prepare pages"], ["segmenting", "Find answers · SAM 3.1"], ["reading", "Read handwriting · Muse Spark"],
+            ["grading", "Grade with rubric · Muse Spark"], ["moderating", "Moderator check · Muse Spark"]] %>
+<% current = steps.index { |s, _| s == book.status } || (book.status == "uploaded" ? -1 : steps.size) %>
+<div class="progress">
+  <% steps.each_with_index do |(_, label), i| %>
+    <% cls = if book.ready? || i < current then "done" elsif i == current && book.processing? then "current" end %>
+    <span class="progress-step <%= cls %>"><%= label %></span>
+  <% end %>
+</div>

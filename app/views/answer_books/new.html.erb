@@ -1,0 +1,25 @@
+<% content_for :title, "Upload answer book" %>
+<h1>Upload answer book</h1>
+<p class="muted"><%= link_to @exam.title, @exam %> · <%= @exam.questions.size %> questions · <%= marks(@exam.total_marks) %> marks</p>
+
+<%= form_with model: @answer_book, url: exam_answer_books_path(@exam), multipart: true do |f| %>
+  <% if @answer_book.errors.any? %>
+    <div class="errors"><ul><% @answer_book.errors.full_messages.each do |m| %><li><%= m %></li><% end %></ul></div>
+  <% end %>
+  <div class="card">
+    <div class="field">
+      <%= f.label :student_label, "Student (roll number or label)" %>
+      <%= f.text_field :student_label, required: true, placeholder: "Roll No. 2401-017" %>
+      <p class="muted small">Use a roll number or a demo label, not a real student's name.</p>
+    </div>
+    <div class="field">
+      <%= f.label :uploads, "Answer book pages" %>
+      <%= f.file_field :uploads, multiple: true, accept: "application/pdf,image/jpeg,image/png,image/webp", required: true %>
+      <p class="muted small">A scanned PDF, or several phone photos (JPG/PNG) in page order.</p>
+    </div>
+    <div class="actions">
+      <%= f.submit "Upload and evaluate" %>
+      <%= link_to "Cancel", @exam, class: "btn btn-secondary" %>
+    </div>
+  </div>
+<% end %>

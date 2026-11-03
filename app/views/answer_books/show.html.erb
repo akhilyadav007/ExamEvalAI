@@ -1,0 +1,99 @@
+<% content_for :title, @answer_book.student_label %>
+<% if @answer_book.processing? %>
+  <% content_for :head do %><meta http-equiv="refresh" content="4"><% end %>
+<% end %>
+
+<div class="page-head">
+  <div>
+    <p class="muted small"><%= link_to @exam.title, @exam %></p>
+    <h1><%= @answer_book.student_label %> <%= status_badge(@answer_book.status) %></h1>
+    <%= render "progress", book: @answer_book %>
+    <% if @answer_book.processing? %>
+      <p class="muted small">Working… this page refreshes every 4 seconds.</p>
+    <% end %>
+  </div>
+  <div class="actions">
+    <%= button_to "Re-run evaluation", rerun_answer_book_path(@answer_book), class: "btn btn-secondary",
+                  form: { data: { turbo_confirm: "Re-run the full evaluation? Teacher marks for this book will be cleared." } } %>
+    <%= button_to "Delete", answer_book_path(@answer_book), method: :delete, class: "btn btn-danger",
+                  form: { data: { turbo_confirm: "Delete this answer book?" } } %>
+  </div>
+</div>
+
+<% if @answer_book.failed? %>
+  <div class="flash flash-alert"><strong>Evaluation failed.</strong> <%= @answer_book.error_message %></div>
+<% end %>
+
+<% if @answers.any? %>
+  <div class="stats">
+    <div class="stat"><div class="stat-value"><%= marks(@answer_book.ai_total) %> <small class="muted">/ <%= marks(@exam.total_marks) %></small></div><div class="stat-label">AI total</div></div>
+    <div class="stat"><div class="stat-value"><%= marks(@answer_book.final_total) %></div><div class="stat-label">Final total (teacher overrides applied)</div></div>
+    <div class="stat"><div class="stat-value"><%= @answer_book.needs_review_count %></div><div class="stat-label">Answers awaiting teacher review</div></div>
+    <div class="stat"><div class="stat-value"><%= @answer_book.pages.size %></div><div class="stat-label">Pages</div></div>
+  </div>
+<% end %>
+
+<% if @answer_book.moderator_note.present? %>
+  <div class="card"><div class="section-label" style="margin-top:0">Moderator's overall note</div><p class="hindi" style="margin:0"><%= @answer_book.moderator_note %></p></div>
+<% end %>
+
+<div class="review">
+  <section class="pages-col" aria-label="Answer book pages">
+    <% if @answer_book.pages.empty? %>
+      <div class="card muted">Page images will appear here once they are prepared.</div>
+    <% end %>
+    <% @answer_book.pages.each do |page| %>
+      <figure class="page-figure">
+        <figcaption>Page <%= page.number %> · <%= pluralize(page.regions.size, "answer block") %> found by SAM 3.1</figcaption>
+        <div class="page-canvas">
+          <% if page.image.attached? %>
+            <%= image_tag url_for(page.image), alt: "Page #{page.number}", loading: "lazy" %>
+          <% end %>
+          <% page.regions.each do |region| %>
+            <% style = region.css_box(page.width, page.height) %>
+            <% next unless style %>
+            <% color = question_color(@exam, region.question_number) %>
+            <div class="region" style="<%= style %>;--qc:<%= color %>" title="R<%= region.label_index %><%= " · confidence #{region.confidence.round(2)}" if region.confidence %>">
+              <span class="region-label"><%= region.question_number.present? ? "Q#{region.question_number}" : "R#{region.label_index}" %></span>
+            </div>
+          <% end %>
+        </div>
+      </figure>
+    <% end %>
+  </section>
+
+  <section aria-label="Marks per question">
+    <% if @answers.empty? %>
+      <div class="card muted">
+        <%= @answer_book.processing? ? "Answers will appear here after the handwriting is read and graded." : "No answers yet." %>
+      </div>
+    <% end %>
+    <% @answers.each do |answer| %>
+      <%= render "answers/answer", answer: answer, book: @answer_book, exam: @exam %>
+    <% end %>
+  </section>
+</div>
+
+<div class="card" id="trace">
+  <h2>Agent trace</h2>
+  <% if @agent_steps.empty? %>
+    <p class="muted">No steps recorded yet.</p>
+  <% else %>
+    <ol class="trace">
+      <% @agent_steps.each do |s| %>
+        <li class="status-<%= s.status %>">
+          <div class="trace-head">
+            <span class="trace-step"><%= s.step %></span>
+            <% if s.model.present? %><span class="chip"><%= s.model %></span><% end %>
+            <span class="trace-meta">
+              <%= s.status == "running" ? "running…" : (s.duration_ms ? "#{(s.duration_ms / 1000.0).round(1)} s" : "") %>
+              <% if s.input_tokens || s.output_tokens %> · <%= number_with_delimiter(s.input_tokens.to_i) %> in / <%= number_with_delimiter(s.output_tokens.to_i) %> out tokens<% end %>
+              · <%= s.created_at.strftime("%H:%M:%S") %>
+            </span>
+          </div>
+          <div class="trace-summary hindi"><%= s.summary %></div>
+        </li>
+      <% end %>
+    </ol>
+  <% end %>
+</div>

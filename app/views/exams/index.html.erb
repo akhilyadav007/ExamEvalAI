@@ -1,0 +1,29 @@
+<% content_for :title, "Exams" %>
+<div class="page-head">
+  <div>
+    <h1>Exams</h1>
+    <p class="muted">Set up an exam with a rubric, upload scanned answer books, and review AI marks.</p>
+  </div>
+  <%= link_to "New exam", new_exam_path, class: "btn" %>
+</div>
+
+<% if @exams.empty? %>
+  <div class="card"><p class="muted">No exams yet. Create one, or run <code>bin/rails db:seed</code> for a demo exam.</p></div>
+<% else %>
+  <div class="card table-wrap">
+    <table>
+      <thead><tr><th>Exam</th><th>Course</th><th class="num">Questions</th><th class="num">Total marks</th><th class="num">Answer books</th></tr></thead>
+      <tbody>
+        <% @exams.each do |exam| %>
+          <tr>
+            <td><%= link_to exam.title, exam %><div class="muted small"><%= exam.subject %></div></td>
+            <td><%= exam.course %></td>
+            <td class="num"><%= exam.questions.size %></td>
+            <td class="num"><%= marks(exam.total_marks) %></td>
+            <td class="num"><%= exam.answer_books.size %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

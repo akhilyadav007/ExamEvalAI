@@ -1,0 +1,91 @@
+<% q = answer.question %>
+<article class="card answer-card" id="q-<%= q.number %>" style="--qc:<%= question_color(exam, q.number) %>">
+  <div class="answer-head">
+    <div>
+      <h3>Question <%= q.number %></h3>
+      <div class="actions small">
+        <%= verdict_badge(answer.moderator_verdict) %>
+        <% if answer.teacher_marks %>
+          <span class="badge badge-teacher">Teacher: <%= marks(answer.teacher_marks) %></span>
+        <% elsif answer.needs_review? %>
+          <span class="badge badge-review">Needs review</span>
+        <% end %>
+        <% if answer.detected_language.present? %><span class="chip"><%= answer.detected_language.capitalize %></span><% end %>
+      </div>
+    </div>
+    <div class="answer-marks"><%= marks(answer.ai_marks) %> <small>/ <%= marks(q.max_marks) %></small></div>
+  </div>
+
+  <div class="question-text small"><%= q.prompt %></div>
+
+  <div class="section-label">Transcript
+    <% if answer.reading_confidence && answer.transcript.present? %><span class="muted">· legibility <%= percent(answer.reading_confidence) %></span><% end %>
+  </div>
+  <% if answer.transcript.present? %>
+    <div class="transcript"><%= answer.transcript %></div>
+  <% else %>
+    <p class="muted">Not attempted (no answer found for this question).</p>
+  <% end %>
+
+  <% if answer.criteria.any? %>
+    <div class="section-label">Rubric criteria</div>
+    <div class="table-wrap">
+      <table class="criteria">
+        <thead><tr><th>Criterion</th><th class="num">Marks</th><th>Evidence</th></tr></thead>
+        <tbody>
+          <% answer.criteria.each do |c| %>
+            <tr>
+              <td><%= c["criterion"] %></td>
+              <td class="num"><%= marks(c["awarded"]) %> / <%= marks(c["max"]) %></td>
+              <td class="evidence"><%= c["evidence"] %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+
+  <% if answer.grader_justification.present? %>
+    <div class="section-label">Grader
+      <% if answer.grader_marks %><span class="muted">· <%= marks(answer.grader_marks) %> marks · confidence <%= percent(answer.grader_confidence) %></span><% end %>
+    </div>
+    <p class="small"><%= answer.grader_justification %></p>
+    <% if answer.grader_flags.any? %>
+      <p><% answer.grader_flags.each do |flag| %><span class="chip"><%= flag.to_s.humanize %></span><% end %></p>
+    <% end %>
+  <% end %>
+
+  <% if answer.moderator_verdict.present? %>
+    <div class="mod-box">
+      <strong>Moderator:</strong> <%= marks(answer.moderator_marks) %> marks — <%= answer.moderator_notes %>
+    </div>
+  <% end %>
+
+  <% if answer.needs_review? && answer.review_reason_list.any? %>
+    <div class="review-box">
+      <strong>Needs review</strong>
+      <ul><% answer.review_reason_list.each do |r| %><li><%= r %></li><% end %></ul>
+    </div>
+  <% end %>
+
+  <%= form_with model: answer, url: answer_book_answer_path(book, answer), method: :patch, class: "teacher-form" do |f| %>
+    <div class="row">
+      <div>
+        <%= f.label :teacher_marks, "Teacher marks" %>
+        <%= f.number_field :teacher_marks, step: 0.5, min: 0, max: q.max_marks.to_f,
+                           value: answer.teacher_marks && marks(answer.teacher_marks), placeholder: marks(answer.ai_marks) %>
+      </div>
+      <div>
+        <%= f.label :teacher_note, "Note (optional)" %>
+        <%= f.text_field :teacher_note, placeholder: "Reason for the change" %>
+      </div>
+    </div>
+    <div class="buttons">
+      <%= f.submit "Save" %>
+      <% if answer.ai_marks %>
+        <%= f.submit "Confirm AI mark (#{marks(answer.ai_marks)})", name: "confirm", class: "btn btn-secondary" %>
+      <% end %>
+      <% if answer.reviewed? %><span class="muted small">Reviewed <%= time_ago_in_words(answer.reviewed_at) %> ago</span><% end %>
+    </div>
+  <% end %>
+</article>

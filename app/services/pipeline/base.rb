@@ -57,6 +57,12 @@ module Pipeline
       ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
     end
 
+    # 4.0 → "4", 6.5 → "6.5" (for trace summaries)
+    def self.fmt(value)
+      v = value.to_f
+      v == v.round ? v.round.to_s : v.to_s
+    end
+
     def self.half_step(value, max)
       v = (value.to_f * 2).round / 2.0
       v.clamp(0.0, max.to_f)

@@ -34,7 +34,7 @@ class Answer < ApplicationRecord
     return if teacher_marks.nil?
 
     if teacher_marks.negative? || teacher_marks > question.max_marks
-      errors.add(:teacher_marks, "must be between 0 and #{question.max_marks.to_f}")
+      errors.add(:teacher_marks, "must be between 0 and #{Pipeline::Base.fmt(question.max_marks)}")
     elsif (teacher_marks * 2) % 1 != 0
       errors.add(:teacher_marks, "must be in steps of 0.5")
     end

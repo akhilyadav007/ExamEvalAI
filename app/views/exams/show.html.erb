@@ -1,0 +1,87 @@
+<% content_for :title, @exam.title %>
+<div class="page-head">
+  <div>
+    <h1><%= @exam.title %></h1>
+    <p class="muted"><%= [@exam.course, @exam.subject].compact_blank.join(" · ") %> · <%= @exam.questions.size %> questions · <%= marks(@exam.total_marks) %> marks</p>
+  </div>
+  <div class="actions">
+    <%= link_to "Upload answer book", new_exam_answer_book_path(@exam), class: "btn" %>
+    <%= link_to "Edit exam", edit_exam_path(@exam), class: "btn btn-secondary" %>
+  </div>
+</div>
+
+<div class="card">
+  <h2>Answer books</h2>
+  <% if @answer_books.empty? %>
+    <p class="muted">No answer books yet. <%= link_to "Upload the first one", new_exam_answer_book_path(@exam) %>.</p>
+  <% else %>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Student</th><th>Status</th><th class="num">AI total</th><th class="num">Final total</th><th class="num">Needs review</th><th></th></tr></thead>
+        <tbody>
+          <% @answer_books.each do |book| %>
+            <tr>
+              <td><%= link_to book.student_label, book %></td>
+              <td><%= status_badge(book.status) %></td>
+              <td class="num"><%= book.answers.any? ? marks(book.ai_total) : "–" %> / <%= marks(@exam.total_marks) %></td>
+              <td class="num"><%= book.answers.any? ? marks(book.final_total) : "–" %></td>
+              <td class="num">
+                <% n = book.needs_review_count %>
+                <%= n.positive? ? tag.span(n, class: "badge badge-review") : (book.ready? ? "0" : "–") %>
+              </td>
+              <td class="num"><%= link_to "Review", book, class: "btn btn-small btn-secondary" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% end %>
+</div>
+
+<div class="card">
+  <h2>Accuracy: AI vs teacher</h2>
+  <% if @accuracy.any? %>
+    <div class="stats">
+      <div class="stat"><div class="stat-value"><%= percent(@accuracy.agreement_rate) %></div><div class="stat-label">Agreement (within ±0.5)</div></div>
+      <div class="stat"><div class="stat-value"><%= @accuracy.mean_absolute_error.round(2) %></div><div class="stat-label">Mean absolute error (marks)</div></div>
+      <div class="stat"><div class="stat-value"><%= @accuracy.count %></div><div class="stat-label">Answers reviewed by a teacher</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Question</th><th class="num">Reviewed</th><th class="num">AI avg</th><th class="num">Teacher avg</th><th class="num">MAE</th></tr></thead>
+        <tbody>
+          <% @accuracy.per_question.each do |row| %>
+            <tr>
+              <td>Q<%= row.question.number %> <span class="muted">(<%= marks(row.question.max_marks) %>)</span></td>
+              <td class="num"><%= row.count %></td>
+              <td class="num"><%= row.ai_avg ? row.ai_avg.round(2) : "–" %></td>
+              <td class="num"><%= row.teacher_avg ? row.teacher_avg.round(2) : "–" %></td>
+              <td class="num"><%= row.mae ? row.mae.round(2) : "–" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p class="muted">Once a teacher saves or confirms marks on the review screen, this panel shows how often the AI agreed with them.</p>
+  <% end %>
+</div>
+
+<div class="card">
+  <h2>Questions</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Q</th><th>Question</th><th>Rubric</th><th class="num">Marks</th></tr></thead>
+      <tbody>
+        <% @exam.questions.each do |q| %>
+          <tr>
+            <td><strong><%= q.number %></strong></td>
+            <td class="hindi"><%= simple_format(q.prompt) %></td>
+            <td class="hindi small"><%= simple_format(q.rubric.presence || "—") %></td>
+            <td class="num"><%= marks(q.max_marks) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

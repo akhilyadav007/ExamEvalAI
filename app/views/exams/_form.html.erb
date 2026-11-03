@@ -1,0 +1,45 @@
+<%= form_with model: exam do |f| %>
+  <% if exam.errors.any? %>
+    <div class="errors">
+      <strong>Please fix the following:</strong>
+      <ul><% exam.errors.full_messages.each do |m| %><li><%= m %></li><% end %></ul>
+    </div>
+  <% end %>
+
+  <div class="card">
+    <h2>Exam details</h2>
+    <div class="field"><%= f.label :title %><%= f.text_field :title, required: true, placeholder: "B.Sc. Part I — Environmental Studies" %></div>
+    <div class="grid-2">
+      <div class="field"><%= f.label :subject %><%= f.text_field :subject %></div>
+      <div class="field"><%= f.label :course %><%= f.text_field :course, placeholder: "B.Sc. Part I" %></div>
+    </div>
+    <div class="field"><%= f.label :instructions, "Instructions for examiners (optional)" %><%= f.text_area :instructions, rows: 2 %></div>
+  </div>
+
+  <div class="card">
+    <h2>Questions &amp; rubric</h2>
+    <p class="muted small">Blank rows are ignored. Hindi and English are both fine. Give each rubric criterion its marks, e.g. “Definition — 2 marks”.</p>
+    <%= f.fields_for :questions do |qf| %>
+      <div class="question-fields">
+        <%= qf.hidden_field :position %>
+        <div class="field-row">
+          <div class="field"><%= qf.label :number, "Q. no." %><%= qf.text_field :number, placeholder: "1" %></div>
+          <div class="field"><%= qf.label :max_marks, "Max marks" %><%= qf.number_field :max_marks, step: 0.5, min: 0, value: (qf.object.max_marks.to_f.positive? ? marks(qf.object.max_marks) : nil) %></div>
+          <div class="field"><%= qf.label :prompt, "Question" %><%= qf.text_area :prompt, rows: 2, class: "hindi" %></div>
+        </div>
+        <div class="grid-2">
+          <div class="field"><%= qf.label :model_answer, "Model answer" %><%= qf.text_area :model_answer, rows: 3, class: "hindi" %></div>
+          <div class="field"><%= qf.label :rubric %><%= qf.text_area :rubric, rows: 3, class: "hindi" %></div>
+        </div>
+        <% if qf.object.persisted? %>
+          <label class="destroy"><%= qf.check_box :_destroy %> Remove this question</label>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="actions">
+    <%= f.submit exam.persisted? ? "Save exam" : "Create exam" %>
+    <%= link_to "Cancel", exam.persisted? ? exam_path(exam) : exams_path, class: "btn btn-secondary" %>
+  </div>
+<% end %>
