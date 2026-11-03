@@ -1,0 +1,30 @@
+# Secrets — never commit
+.env
+.env.*
+!.env.example
+/config/*.key
+
+# Bundler
+/.bundle
+
+# Logs, temp, pids
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
+# SQLite databases and Active Storage uploads
+/storage/*
+!/storage/.keep
+/tmp/storage/*
+!/tmp/storage/
+!/tmp/storage/.keep
+
+/public/assets
+/node_modules
+
+# Local sample answer sheets (keep real student data out of the repo)
+/samples/
